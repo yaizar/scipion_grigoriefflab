@@ -28,10 +28,7 @@ This sub-package contains data and protocol classes
 wrapping Grigorieff Lab programs at Brandeis
 """
 from plugin import _plugin  # import at the very top
-from bibtex import _bibtex # Load bibtex dict with references
 from grigoriefflab import *
-
-_logo = _plugin.logo  # Load logo from plugin
 
 from protocol_ctffind import ProtCTFFind
 from protocol_refinement import ProtFrealign
