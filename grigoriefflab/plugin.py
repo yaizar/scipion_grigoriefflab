@@ -38,6 +38,7 @@ class GrigoriefflabPlugin(Plugin):
                        tar='ctffind_V4.1.5.tgz')
 
         env.addPackage('ctffind4', version='4.1.8',
+                       url="http://scipion.cnb.csic.es/downloads/scipion/software/em/ctffind_V4.1.8.tgz",
                        tar='ctffind_V4.1.8.tgz',
                        default=True  # Optional: install this binary by default
                        )
@@ -49,15 +50,20 @@ class GrigoriefflabPlugin(Plugin):
                        tar='summovie_1.0.2.tgz')
 
         env.addPackage('unblur', version='1.0.15',
-                       tar='unblur_1.0_150529.tgz')
+                       url="http://scipion.cnb.csic.es/downloads/scipion/software/em/unblur_1.0_150529.tgz",
+                       tar='unblur_1.0_150529.tgz',
+                       default=True  # Optional: install this binary by default
+                       )
 
         env.addPackage('unblur', version='1.0.2',
                        tar='unblur_1.0.2.tgz')
 
         env.addPackage('frealign', version='9.07',
+                       default=True,  # Optional: install this binary by default
                        tar='frealign_v9.07.tgz')
 
         env.addPackage('mag_distortion', version='1.0.1',
+                       default=True,  # Optional: install this binary by default
                        tar='mag_distortion-1.0.1.tgz')
 
 
