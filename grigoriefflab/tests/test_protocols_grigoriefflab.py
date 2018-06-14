@@ -75,7 +75,7 @@ class TestBrandeisBase(BaseTest):
         cls.protImport = cls.newProtocol(ProtImportVolumes,
                                          filesPath=pattern,
                                          samplingRate=samplingRate
-                                        )
+                                         )
         cls.launchProtocol(cls.protImport)
         return cls.protImport
 
@@ -114,12 +114,23 @@ class TestBrandeisBase(BaseTest):
                                        magnification=56000)
 
     @classmethod
+    def runImportMicrographRCT(cls, pattern):
+        """ Run an Import micrograph protocol. """
+        return cls.runImportMicrograph(pattern,
+                                       samplingRate=2.28,
+                                       voltage=100,
+                                       sphericalAberration=2.9,
+                                       scannedPixelSize=None,
+                                       magnification=50000)
+
+    @classmethod
     def runImportParticleGrigorieff(cls, pattern):
         """ Run an Import micrograph protocol. """
         return cls.runImportParticles(pattern,
                                       samplingRate=4.,
                                       checkStack=True,
-                            importFrom=ProtImportParticles.IMPORT_FROM_SCIPION)
+                                      importFrom=ProtImportParticles.IMPORT_FROM_SCIPION)
+
     @classmethod
     def runImportVolumesGrigorieff(cls, pattern):
         """ Run an Import micrograph protocol. """
@@ -137,44 +148,44 @@ class TestImportParticles(BaseTest):
     def test_import(self):
         parFile = self.dataset.getFile('particles/particles_iter_002.par')
         stackFile = self.dataset.getFile('particles/particles.mrc')
-        
-        protImport = self.newProtocol(ProtImportParticles,
-                                         objLabel='import parfile & stk',
-                                         parFile=parFile,
-                                         stackFile=stackFile,
-                                         samplingRate=9.90,
-                                         importFrom=ProtImportParticles.IMPORT_FROM_FREALIGN)
 
-        self.launchProtocol(protImport)      
+        protImport = self.newProtocol(ProtImportParticles,
+                                      objLabel='import parfile & stk',
+                                      parFile=parFile,
+                                      stackFile=stackFile,
+                                      samplingRate=9.90,
+                                      importFrom=ProtImportParticles.IMPORT_FROM_FREALIGN)
+
+        self.launchProtocol(protImport)
         # check that input images have been imported (a better way to do this?)
         outputParticles = getattr(protImport, 'outputParticles', None)
 
         if outputParticles is None:
             raise Exception('Import failed. Par file: %s' % parFile)
-        
+
         self.assertTrue(outputParticles.getSize() == 180)
-        
+
         goldFile = self.dataset.getFile('particles/particles.sqlite')
         goldSet = SetOfParticles(filename=goldFile)
-        
+
         for p1, p2 in izip(goldSet,
                            outputParticles.iterItems(orderBy=['_micId', 'id'],
                                                      direction='ASC')):
             m1 = p1.getTransform().getMatrix()
             m2 = p2.getTransform().getMatrix()
             self.assertTrue(np.allclose(m1, m2, atol=0.01))
-            
+
         self.assertTrue(outputParticles.hasCTF())
         self.assertTrue(outputParticles.hasAlignmentProj())
 
-    
+
 class TestBrandeisCtffind(TestBrandeisBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
         TestBrandeisBase.setData()
         cls.protImport = cls.runImportMicrographBPV(cls.micFn)
-    
+
     def testCtffind(self):
         protCTF = ProtCTFFind(useCtffind4=False)
         protCTF.inputMicrographs.set(self.protImport.outputMicrographs)
@@ -183,14 +194,14 @@ class TestBrandeisCtffind(TestBrandeisBase):
         self.proj.launchProtocol(protCTF, wait=True)
         self.assertIsNotNone(protCTF.outputCTF,
                              "SetOfCTF has not been produced.")
-        
+
         valuesList = [[23861, 23664, 56],
                       [22383, 22153, 52.6],
                       [22716, 22526, 59.1]]
         for ctfModel, values in izip(protCTF.outputCTF, valuesList):
-            self.assertAlmostEquals(ctfModel.getDefocusU(),values[0], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusV(),values[1], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusAngle(),values[2], delta=5)
+            self.assertAlmostEquals(ctfModel.getDefocusU(), values[0], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusV(), values[1], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusAngle(), values[2], delta=5)
             self.assertAlmostEquals(ctfModel.getMicrograph().getSamplingRate(),
                                     2.474, delta=0.001)
 
@@ -200,12 +211,12 @@ class TestBrandeisCtffind(TestBrandeisBase):
         protCTF.numberOfThreads.set(4)
         self.proj.launchProtocol(protCTF, wait=True)
         self.assertIsNotNone(protCTF.outputCTF, "SetOfCTF has not been produced.")
-        
-        valuesList = [[23863, 23640, 64], [22159, 21983, 50.6], [22394, 22269, 45]]
+
+        valuesList = [[23920, 23499, 57.6], [22231, 21905, 59.3], [22444, 22270, 45.9]]
         for ctfModel, values in izip(protCTF.outputCTF, valuesList):
-            self.assertAlmostEquals(ctfModel.getDefocusU(),values[0], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusV(),values[1], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusAngle(),values[2], delta=5)
+            self.assertAlmostEquals(ctfModel.getDefocusU(), values[0], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusV(), values[1], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusAngle(), values[2], delta=5)
             self.assertAlmostEquals(ctfModel.getMicrograph().getSamplingRate(),
                                     1.237, delta=0.001)
 
@@ -216,7 +227,7 @@ class TestBrandeisCtffind4(TestBrandeisBase):
         setupTestProject(cls)
         TestBrandeisBase.setData()
         cls.protImport = cls.runImportMicrographBPV(cls.micFn)
-    
+
     def testCtffind4V1(self):
         protCTF = ProtCTFFind()
         protCTF.inputMicrographs.set(self.protImport.outputMicrographs)
@@ -224,12 +235,12 @@ class TestBrandeisCtffind4(TestBrandeisBase):
         protCTF.numberOfThreads.set(4)
         self.proj.launchProtocol(protCTF, wait=True)
         self.assertIsNotNone(protCTF.outputCTF, "SetOfCTF has not been produced.")
-        
-        valuesList = [[23861, 23664, 53], [22383, 22153, 48.5], [22716, 22526, 54.3]]
+
+        valuesList = [[24049, 23586, 58], [22356, 22030, 44], [22661, 22480, 52]]
         for ctfModel, values in izip(protCTF.outputCTF, valuesList):
-            self.assertAlmostEquals(ctfModel.getDefocusU(),values[0], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusV(),values[1], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusAngle(),values[2], delta=5)
+            self.assertAlmostEquals(ctfModel.getDefocusU(), values[0], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusV(), values[1], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusAngle(), values[2], delta=5)
             self.assertAlmostEquals(ctfModel.getMicrograph().getSamplingRate(),
                                     2.474, delta=0.001)
 
@@ -239,22 +250,51 @@ class TestBrandeisCtffind4(TestBrandeisBase):
         protCTF.numberOfThreads.set(4)
         self.proj.launchProtocol(protCTF, wait=True)
         self.assertIsNotNone(protCTF.outputCTF, "SetOfCTF has not been produced.")
-        
+
         valuesList = [[23863, 23640, 54], [22159, 21983, 45.8], [22394, 22269, 171]]
         for ctfModel, values in izip(protCTF.outputCTF, valuesList):
-            self.assertAlmostEquals(ctfModel.getDefocusU(),values[0], delta=1000)
-            self.assertAlmostEquals(ctfModel.getDefocusV(),values[1], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusU(), values[0], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusV(), values[1], delta=1000)
             # def angle estimation differs a lot btw 4.0.x vs 4.1.x ctffind versions
             # self.assertAlmostEquals(ctfModel.getDefocusAngle(),values[2], delta=5)
             self.assertAlmostEquals(ctfModel.getMicrograph().getSamplingRate(),
                                     1.237, delta=0.001)
 
 
+class TestBrandeisCtftilt(TestBrandeisBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('rct')
+        cls.micFn = cls.dataset.getFile('micrographs/F_rct_t_3003.tif')
+        cls.protImport = cls.runImportMicrographRCT(cls.micFn)
+
+    def testCtftilt(self):
+        protCTF = self.newProtocol(ProtCTFTilt,
+                                   minDefocus=1.0,
+                                   maxDefocus=1.5,
+                                   tiltA=38.0,
+                                   ctfDownFactor=2,
+                                   numberOfThreads=4)
+        protCTF.inputMicrographs.set(self.protImport.outputMicrographs)
+        self.proj.launchProtocol(protCTF, wait=True)
+        self.assertIsNotNone(protCTF.outputCTF, "SetOfCTF has not been produced.")
+
+        values = [14366, 12784, 21, 43.0]
+        for ctfModel in protCTF.outputCTF:
+            self.assertAlmostEquals(ctfModel.getDefocusU(), values[0], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusV(), values[1], delta=1000)
+            self.assertAlmostEquals(ctfModel.getDefocusAngle(), values[2], delta=5)
+            self.assertAlmostEqual(float(ctfModel._ctftilt_tiltAngle), values[3], delta=3.0)
+            self.assertAlmostEquals(ctfModel.getMicrograph().getSamplingRate(),
+                                    4.56, delta=0.001)
+
+
 class TestFrealignRefine(TestBrandeisBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        dataProject='grigorieff'
+        dataProject = 'grigorieff'
         dataset = DataSet.getDataSet(dataProject)
         TestBrandeisBase.setData()
         particlesPattern = dataset.getFile('particles.sqlite')
@@ -264,9 +304,9 @@ class TestFrealignRefine(TestBrandeisBase):
 
     def testFrealign(self):
         frealign = self.newProtocol(ProtFrealign,
-                                    inputParticles = self.protImportPart.outputParticles,
+                                    inputParticles=self.protImportPart.outputParticles,
                                     doInvert=False,
-                                    input3DReference = self.protImportVol.outputVolume,
+                                    input3DReference=self.protImportVol.outputVolume,
                                     useInitialAngles=True,
                                     mode=MOD_REFINEMENT,
                                     innerRadius=0.,
@@ -290,7 +330,7 @@ class TestFrealignClassify(TestBrandeisBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        dataProject='grigorieff'
+        dataProject = 'grigorieff'
         dataset = DataSet.getDataSet(dataProject)
         TestBrandeisBase.setData()
         particlesPattern = dataset.getFile('particles.sqlite')
@@ -304,9 +344,9 @@ class TestFrealignClassify(TestBrandeisBase):
                                     doInvert=False,
                                     input3DReference=self.protImportVol.outputVolume,
                                     numberOfIterations=3,
-                                    itRefineAngles = 2,
-                                    itRefineShifts = 3,
-                                    numberOfClasses = 2,
+                                    itRefineAngles=2,
+                                    itRefineShifts=3,
+                                    numberOfClasses=2,
                                     useInitialAngles=True,
                                     mode=MOD_REFINEMENT,
                                     innerRadius=0.,

@@ -1,3 +1,4 @@
 v1.0.0a0, 15/03/2018 -- First draft
 v1.0.0, 8/5/2018 -- change plugin class
 v1.0.0b2, 8/5/2018 -- small update
+v1.0.0b3, 14/6/2018 -- get changes from scipion v 1.2.1

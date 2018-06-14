@@ -1,7 +1,7 @@
 # **************************************************************************
 # *
 # * Authors:     Roberto Marabini (roberto@cnb.csic.es)
-# *              Josue Gomez Blanco (jgomez@cnb.csic.es)
+# *              Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ import pyworkflow.protocol.params as params
 from pyworkflow.gui.plotter import Plotter
 from grigoriefflab import UNBLUR_PATH, getVersion, UNBLUR_HOME
 from convert import readShiftsMovieAlignment
-
 
 
 class ProtUnblur(ProtAlignMovies):
@@ -102,7 +101,7 @@ class ProtUnblur(ProtAlignMovies):
                            'openmpThreads * numberOfThreads (or MPIs) '
                            'processors. ')
 
-        #group = form.addGroup('Expert Options')
+        # group = form.addGroup('Expert Options')
         form.addParam('minShiftInitSearch', params.FloatParam,
                       default=2.,
                       label='Min. Shift Initial search (A)',
@@ -158,54 +157,54 @@ class ProtUnblur(ProtAlignMovies):
         form.addParallelSection(threads=1, mpi=1)
 
     #
-    #Input stack filename                [my_movie.mrc] : kk.mrc
-    #Number of frames per movie                    [34] :
-    #Output aligned sum file       [my_aligned_sum.mrc] :
-    #Output shifts file                 [my_shifts.txt] :
-    #Pixel size of images (A)                       [1] :
-    #Apply Dose filter?                            [NO] : YES
-    #Exposure per frame (e/A^2)                   [1.0] :
-    #Acceleration voltage (kV)                  [300.0] :
+    # Input stack filename                [my_movie.mrc] : kk.mrc
+    # Number of frames per movie                    [34] :
+    # Output aligned sum file       [my_aligned_sum.mrc] :
+    # Output shifts file                 [my_shifts.txt] :
+    # Pixel size of images (A)                       [1] :
+    # Apply Dose filter?                            [NO] : YES
+    # Exposure per frame (e/A^2)                   [1.0] :
+    # Acceleration voltage (kV)                  [300.0] :
 
-    #Pre-exposure amount(e/A^2)                   [0.0] :
-    #Save Aligned Frames?                          [NO] : NO
+    # Pre-exposure amount(e/A^2)                   [0.0] :
+    # Save Aligned Frames?                          [NO] : NO
 
-    #Set Expert Options?                           [NO] : YES
-    #Output FRC file                       [my_frc.txt] :
-    #Minimum shift for initial search (Angstroms)
-    #[2.0]                                              :
-    #Outer radius shift limit (Angstroms)       [200.0] :
-    #B-factor to apply to images (A^2)           [1500] :
-    #Half-width of central vertical line of Fourier mask
-    #[1]                                                :
-    #Half-width of central horizontal line of Fourier mask
-    #[1]                                                :
-    #Termination shift threshold                  [0.1] :
-    #Maximum number of iterations                  [10] :
-    #Restore Noise Power?                         [YES] :
-    #Verbose Output?                               [NO] : YES
+    # Set Expert Options?                           [NO] : YES
+    # Output FRC file                       [my_frc.txt] :
+    # Minimum shift for initial search (Angstroms)
+    # [2.0]                                              :
+    # Outer radius shift limit (Angstroms)       [200.0] :
+    # B-factor to apply to images (A^2)           [1500] :
+    # Half-width of central vertical line of Fourier mask
+    # [1]                                                :
+    # Half-width of central horizontal line of Fourier mask
+    # [1]                                                :
+    # Termination shift threshold                  [0.1] :
+    # Maximum number of iterations                  [10] :
+    # Restore Noise Power?                         [YES] :
+    # Verbose Output?                               [NO] : YES
 
-    #--------------------------- STEPS functions -------------------------------
+    # --------------------------- STEPS functions -------------------------------
 
     def _processMovie(self, movie):
         numberOfFrames = self._getNumberOfFrames(movie)
-        #FIXME: Figure out how to properly write shifts for unblur
-        #self._writeMovieAlignment(movie, numberOfFrames)
-        
+        # FIXME: Figure out how to properly write shifts for unblur
+        # self._writeMovieAlignment(movie, numberOfFrames)
+
         a0, aN = self._getRange(movie, 'align')
         _, lstFrame, _ = movie.getFramesRange()
 
         movieBaseName = pwutils.removeExt(movie.getFileName())
         aveMicFn = movieBaseName + '_uncorrected_avg.mrc'
-        
+
         if a0 > 1 or aN < lstFrame:
             from pyworkflow.em import ImageHandler
             ih = ImageHandler()
             movieInputFn = movie.getFileName()
-            
+
             if movieInputFn.endswith("mrc"):
                 movieInputFn += ":mrcs"
-            
+
             movieConverted = pwutils.removeExt(movieInputFn) + "_tmp.mrcs"
             ih.convertStack(movieInputFn, movieConverted, a0, aN)
             # Here, only temporal movie file (or link) stored in
@@ -214,12 +213,12 @@ class ProtUnblur(ProtAlignMovies):
             # original data.
             os.remove(movie.getFileName())
             pwutils.moveFile(movieConverted, movie.getFileName())
-        
+
         movieSet = self.inputMovies.get()
         self._createLink(movie)
         range = aN - a0 + 1
         self._argsUnblur(movie, range)
-        
+
         try:
             self.runJob(self._program, self._args)
 
@@ -277,7 +276,7 @@ class ProtUnblur(ProtAlignMovies):
 
         return errors
 
-    #--------------------------- UTILS functions -------------------------------
+    # --------------------------- UTILS functions -------------------------------
     def _argsUnblur(self, movie, numberOfFrames):
         """ Format argument for call unblur program. """
         args = {'movieName': self._getMovieFn(movie),
@@ -355,7 +354,7 @@ YES
 %(doVerboseOutput)s
 eof
 """ % args
-    
+
     def _getMicName(self, movieName):
         """ Return the name for the output micrograph given the movie name.
         """
@@ -394,10 +393,10 @@ eof
         yShiftsCorr = [y / pixSize for y in yShifts]
 
         return xShiftsCorr, yShiftsCorr
-    
+
     def _getNumberOfFrames(self, movie):
         _, lstFrame, _ = movie.getFramesRange()
-        
+
         if movie.hasAlignment():
             _, lastFrmAligned = movie.getAlignment().getRange()
             if lastFrmAligned != lstFrame:
@@ -466,6 +465,8 @@ eof
         first, _ = self._getFrameRange(movie.getNumberOfFrames(), 'align')
         plotter = createGlobalAlignmentPlot(shiftsX, shiftsY, first)
         plotter.savefig(self._getPlotGlobal(movie))
+        plotter.close()
+
 
 def createGlobalAlignmentPlot(meanX, meanY, first):
     """ Create a plotter with the shift per frame. """
@@ -482,9 +483,9 @@ def createGlobalAlignmentPlot(meanX, meanY, first):
     ax.set_title('Alignment based upon full frames')
     ax.set_xlabel('Shift x (pixels)')
     ax.set_ylabel('Shift y (pixels)')
-    
+
     i = first
-    skipLabels = ceil(len(meanX)/10.0)
+    skipLabels = ceil(len(meanX) / 10.0)
     labelTick = 1
 
     for x, y in izip(meanX, meanY):

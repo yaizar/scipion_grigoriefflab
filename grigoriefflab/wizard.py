@@ -35,6 +35,7 @@ from pyworkflow.em.constants import *
 from constants import *
 
 from protocol_ctffind import ProtCTFFind
+from protocol_ctftilt import ProtCTFTilt
 import pyworkflow.gui.dialog as dialog
 from pyworkflow.em.wizard import *
 from protocol_refinement import ProtFrealign
@@ -44,36 +45,38 @@ from protocol_magdist_correct import ProtMagDistCorr
 
 from pyworkflow import findResource
 
-#===============================================================================
+
+# ===============================================================================
 # CTFs
-#===============================================================================
+# ===============================================================================
 
 class BrandeisCTFWizard(CtfWizard):
-    _targets = [(ProtCTFFind, ['ctfDownFactor', 'lowRes', 'highRes'])]
-    
+    _targets = [(ProtCTFFind, ['ctfDownFactor', 'lowRes', 'highRes']),
+                (ProtCTFTilt, ['ctfDownFactor', 'lowRes', 'highRes'])]
+
     def _getParameters(self, protocol):
-        
+
         label, value = self._getInputProtocol(self._targets, protocol)
-        
+
         protParams = {}
-        protParams['input']= protocol.inputMicrographs
-        protParams['label']= label
-        protParams['value']= value
+        protParams['input'] = protocol.inputMicrographs
+        protParams['label'] = label
+        protParams['value'] = value
         return protParams
-    
+
     def _getProvider(self, protocol):
         _objs = self._getParameters(protocol)['input']
         return CtfWizard._getListProvider(self, _objs)
-        
+
     def show(self, form):
         protocol = form.protocol
         params = self._getParameters(protocol)
         _value = params['value']
         _label = params['label']
-        
-#        form.setParamFromVar('inputMicrographs') # update selected input micrographs
+
+        #        form.setParamFromVar('inputMicrographs') # update selected input micrographs
         provider = self._getProvider(protocol)
-        
+
         if provider is not None:
             args = {'unit': UNIT_PIXEL,
                     'downsample': _value[0],
@@ -88,34 +91,35 @@ class BrandeisCTFWizard(CtfWizard):
                 form.setVar(_label[1], d.getLowFreq())
                 form.setVar(_label[2], d.getHighFreq())
         else:
-            dialog.showWarning("Empty input", "Select elements first", form.root)    
-    
-    @classmethod    
-    def getView(self):
-        return "wiz_ctf_downsampling"  
+            dialog.showWarning("Empty input", "Select elements first", form.root)
 
-#===============================================================================
+    @classmethod
+    def getView(self):
+        return "wiz_ctf_downsampling"
+
+    # ===============================================================================
+
+
 # MASKS
-#===============================================================================
+# ===============================================================================
 
 class FrealignVolRadiiWizard(VolumeMaskRadiiWizard):
     _targets = [(ProtFrealign, ['innerRadius', 'outerRadius']),
                 (ProtFrealignClassify, ['innerRadius', 'outerRadius'])]
-    
+
     def _getParameters(self, protocol):
-        
         label, value = self._getInputProtocol(self._targets, protocol)
-        
+
         protParams = {}
-        protParams['input']= protocol.input3DReference
-        protParams['label']= label
-        protParams['value']= value
-        return protParams  
-    
+        protParams['input'] = protocol.input3DReference
+        protParams['label'] = label
+        protParams['value'] = value
+        return protParams
+
     def _getProvider(self, protocol):
         _objs = self._getParameters(protocol)['input']
         return VolumeMaskRadiiWizard._getListProvider(self, _objs)
-    
+
     def show(self, form):
         params = self._getParameters(form.protocol)
         _value = params['value']
@@ -123,93 +127,93 @@ class FrealignVolRadiiWizard(VolumeMaskRadiiWizard):
         VolumeMaskRadiiWizard.show(self, form, _value, _label, UNIT_ANGSTROM)
 
 
-#===============================================================================
+# ===============================================================================
 # FILTERS
-#===============================================================================
- 
+# ===============================================================================
+
 class FrealignBandpassWizard(FilterParticlesWizard):
     _targets = [(ProtFrealign, ['lowResolRefine', 'highResolRefine']),
                 (ProtFrealignClassify, ['lowResolRefine', 'highResolRefine'])]
-    
+
     def _getParameters(self, protocol):
-        
+
         label, value = self._getInputProtocol(self._targets, protocol)
-        
+
         protParams = {}
-        protParams['input']= protocol.inputParticles
-        protParams['label']= label
-        protParams['value']= value
+        protParams['input'] = protocol.inputParticles
+        protParams['label'] = label
+        protParams['value'] = value
         protParams['mode'] = FILTER_NO_DECAY
-        return protParams  
-    
+        return protParams
+
     def _getProvider(self, protocol):
         _objs = self._getParameters(protocol)['input']
         return FilterParticlesWizard._getListProvider(self, _objs)
-    
+
     def show(self, form):
         protocol = form.protocol
         provider = self._getProvider(protocol)
         params = self._getParameters(protocol)
 
         if provider is not None:
-            
-            args = {'mode': params['mode'],                   
+
+            args = {'mode': params['mode'],
                     'lowFreq': params['value'][0],
                     'highFreq': params['value'][1],
                     'unit': UNIT_ANGSTROM
                     }
-            
+
             args['showDecay'] = False
 
             d = BandPassFilterDialog(form.root, provider, **args)
-            
+
             if d.resultYes():
-                form.setVar('highResolRefine', d.samplingRate/d.getHighFreq())
-                form.setVar('lowResolRefine', d.samplingRate/d.getLowFreq())
-                
+                form.setVar('highResolRefine', d.samplingRate / d.getHighFreq())
+                form.setVar('lowResolRefine', d.samplingRate / d.getLowFreq())
+
         else:
-            dialog.showWarning("Input particles", "Select particles first", form.root)  
-            
- 
+            dialog.showWarning("Input particles", "Select particles first", form.root)
+
+
 class FrealignVolBandpassWizard(FilterVolumesWizard):
     _targets = [(ProtFrealign, ['resolution']),
                 (ProtFrealignClassify, ['resolution'])]
-    
+
     def _getParameters(self, protocol):
-        
+
         label, value = self._getInputProtocol(self._targets, protocol)
-        
+
         protParams = {}
-        protParams['input']= protocol.input3DReference
-        protParams['label']= label
-        protParams['value']= value
+        protParams['input'] = protocol.input3DReference
+        protParams['label'] = label
+        protParams['value'] = value
         protParams['mode'] = FILTER_LOW_PASS_NO_DECAY
         return protParams
-    
+
     def _getProvider(self, protocol):
-        _objs = self._getParameters(protocol)['input']  
+        _objs = self._getParameters(protocol)['input']
         return FilterVolumesWizard._getListProvider(self, _objs)
-    
+
     def show(self, form):
         params = self._getParameters(form.protocol)
         protocol = form.protocol
         provider = self._getProvider(protocol)
 
         if provider is not None:
-            
-            args = {'mode': params['mode'],                   
+
+            args = {'mode': params['mode'],
                     'highFreq': params['value'],
                     'unit': UNIT_ANGSTROM
                     }
-            
+
             args['showLowFreq'] = False
             args['showDecay'] = False
 
             d = BandPassFilterDialog(form.root, provider, **args)
-            
+
             if d.resultYes():
-                form.setVar('resolution', d.samplingRate/d.getHighFreq())
-                
+                form.setVar('resolution', d.samplingRate / d.getHighFreq())
+
         else:
             dialog.showWarning("Input volumes", "Select volumes first", form.root)
 
@@ -247,14 +251,14 @@ class BrandeisDistWizard(CtfWizard):
 
         if provider is not None:
             args = {'unit': UNIT_ANGSTROM,
-                    'lf': "%0.2f" % (pix/_value[0]),
-                    'hf': "%0.2f" % (pix/_value[1])
+                    'lf': "%0.2f" % (pix / _value[0]),
+                    'hf': "%0.2f" % (pix / _value[1])
                     }
             d = CtfDialog(form.root, provider, **args)
 
             if d.resultYes():
-                form.setVar(_label[0], "%0.2f" % (pix/d.getLowFreq()))
-                form.setVar(_label[1], "%0.2f" % (pix/d.getHighFreq()))
+                form.setVar(_label[0], "%0.2f" % (pix / d.getLowFreq()))
+                form.setVar(_label[1], "%0.2f" % (pix / d.getHighFreq()))
         else:
             dialog.showWarning("Empty input", "Select elements first", form.root)
 
@@ -263,9 +267,9 @@ class BrandeisDistWizard(CtfWizard):
         return "wiz_ctf"
 
 
-#===============================================================================
+# ===============================================================================
 # Pixel size
-#===============================================================================
+# ===============================================================================
 
 class BrandeisPixSizeWizard(Wizard):
     _targets = [(ProtMagDistCorr, ['newPix'])]

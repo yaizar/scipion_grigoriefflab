@@ -31,6 +31,7 @@ from plugin import _plugin  # import at the very top
 from grigoriefflab import *
 
 from protocol_ctffind import ProtCTFFind
+from protocol_ctftilt import ProtCTFTilt
 from protocol_refinement import ProtFrealign
 from protocol_magdist_estimate import ProtMagDistEst
 from protocol_magdist_correct import ProtMagDistCorr

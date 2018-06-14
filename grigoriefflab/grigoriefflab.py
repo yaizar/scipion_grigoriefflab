@@ -28,21 +28,19 @@ import os
 from os.path import join, exists
 from plugin import *  # Import everything from plugin.py - we'll need things that move there!
 
-# MAGDIST_HOME_VAR = 'MAGDIST_HOME' # 'MAGDIST_HOME' is in scipion.template. Move this to plugin.py
-#
-# SUMMOVIE_HOME = 'SUMMOVIE_HOME' # 'SUMMOVIE_HOME' is in scipion.template. Move this to plugin.py
-#
-# UNBLUR_HOME = 'UNBLUR_HOME' # 'UNBLUR_HOME' is in scipion.template. Move this to plugin.py
-#
-# FREALIGN_HOME_VAR = 'FREALIGN_HOME' # 'FREALIGN_HOME' is in scipion.template. Move this to plugin.py
-#
-# CTFFIND4_HOME = 'CTFFIND4_HOME' # 'CTFFIND4_HOME' is in scipion.template. Move this to plugin.py
-# CTFFIND_HOME = 'CTFFIND_HOME' # 'CTFFIND_HOME' is in scipion.template. Move this to plugin.py
+
+# Program common names
+FREALIGN_APP = 'FREALIGN'
+CTFFIND4_APP = 'CTFFIND4'
+V4_0_15 = '4.0.15'
+V4_1_10 = '4.1.10'
 
 
-CTFFIND3 = 'ctffind3.exe'  # NOT a var in scipion.template. We do not need to move it.
+CTFFIND3 = 'ctffind3.exe'
 CTFFIND3MP = 'ctffind3_mp.exe'
 CTFFIND4 = 'ctffind'
+CTFTILT = 'ctftilt.exe'
+CTFTILTMP = 'ctftilt_mp.exe'
 FREALIGN = 'frealign_v9.exe'
 FREALIGNMP = 'frealign_v9_mp.exe'
 MAGDISTEST = 'mag_distortion_estimate_openmp.exe'
@@ -53,7 +51,7 @@ UNBLUR = 'unblur_openmp.exe'
 SUMMOVIE = 'sum_movie_openmp.exe'
 
 
-def getVersion(var='FREALIGN'):
+def getVersion(var=FREALIGN_APP):
     varHome = var + '_HOME'
     path = os.environ[varHome]
     for v in getSupportedVersions(var):
@@ -62,11 +60,11 @@ def getVersion(var='FREALIGN'):
     return ''
 
 
-def getSupportedVersions(var='FREALIGN'):
+def getSupportedVersions(var=FREALIGN_APP):
     if var == 'UNBLUR':
         return ['1.0_150529', '1.0.2']
-    elif var == 'CTFFIND4':
-        return ['4.0.15', '4.1.5', '4.1.8']
+    elif var == CTFFIND4_APP:
+        return ['4.0.15', '4.1.5', '4.1.8', V4_1_10]
     else:  # FREALIGN
         return ['9.07']
 
@@ -88,6 +86,9 @@ def _getHome(key, default):
 CTFFIND_PATH = join(os.environ[CTFFIND_HOME], CTFFIND3)
 CTFFINDMP_PATH = join(os.environ[CTFFIND_HOME], CTFFIND3MP)
 CTFFIND4_PATH = _getCtffind4()
+
+CTFTILT_PATH = join(os.environ[CTFFIND_HOME], CTFTILT)
+CTFTILTMP_PATH = join(os.environ[CTFFIND_HOME], CTFTILTMP)
 
 FREALIGN_HOME = _getHome(FREALIGN_HOME_VAR, 'frealign')
 FREALIGN_PATH = join(FREALIGN_HOME, 'bin', FREALIGN)

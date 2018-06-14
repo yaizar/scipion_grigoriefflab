@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     Josue Gomez Blanco (jgomez@cnb.csic.es)
+# * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -40,7 +40,6 @@ from numpy.linalg import inv
 from pyworkflow.object import Float
 import pyworkflow.em as em
 
-
 HEADER_COLUMNS = ['INDEX', 'PSI', 'THETA', 'PHI', 'SHX', 'SHY', 'MAG',
                   'FILM', 'DF1', 'DF2', 'ANGAST', 'OCC',
                   '-LogP', 'SIGMA', 'SCORE', 'CHANGE']
@@ -48,6 +47,7 @@ HEADER_COLUMNS = ['INDEX', 'PSI', 'THETA', 'PHI', 'SHX', 'SHY', 'MAG',
 
 class FrealignParFile(object):
     """ Handler class to read/write frealign metadata."""
+
     def __init__(self, filename, mode='r'):
         self._file = open(filename, mode)
         self._count = 0
@@ -74,12 +74,12 @@ def readSetOfParticles(inputSet, outputSet, parFileName):
      It is assumed that the order of iteration of the particles
      and the lines match and have the same number.
     """
-    #create dictionary that matches input particles with param file
+    # create dictionary that matches input particles with param file
     samplingRate = inputSet.getSamplingRate()
     parFile = FrealignParFile(parFileName)
     partIter = iter(inputSet.iterItems(orderBy=['_micId', 'id'], direction='ASC'))
-     
-    for particle, row in izip(partIter, parFile):        
+
+    for particle, row in izip(partIter, parFile):
         particle.setTransform(rowToAlignment(row, samplingRate))
         # We assume that each particle have ctfModel
         # in order to be processed in Frealign
@@ -104,8 +104,8 @@ def rowToAlignment(alignmentRow, samplingRate):
     angles[0] = float(alignmentRow.get('PSI'))
     angles[1] = float(alignmentRow.get('THETA'))
     angles[2] = float(alignmentRow.get('PHI'))
-    shifts[0] = float(alignmentRow.get('SHX'))/samplingRate
-    shifts[1] = float(alignmentRow.get('SHY'))/samplingRate
+    shifts[0] = float(alignmentRow.get('SHX')) / samplingRate
+    shifts[1] = float(alignmentRow.get('SHY')) / samplingRate
 
     M = matrixFromGeometry(shifts, angles)
     alignment.setMatrix(M)
@@ -139,7 +139,7 @@ def rowToCtfModel(ctfRow, ctfModel):
     ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
 
 
-#-------------- Old fuctions (before using EMX matrix for alignment) ------
+# -------------- Old fuctions (before using EMX matrix for alignment) ------
 def parseCtffindOutput(filename):
     """ Retrieve defocus U, V and angle from the
     output file of the ctffind3 execution.
@@ -171,6 +171,21 @@ def parseCtffind4Output(filename):
     return result
 
 
+def parseCtftiltOutput(filename):
+    """ Retrieve defocus U,V,angle,tilt axis,tilt angle,CC from the
+    output file of the ctftilt execution.
+    """
+    result = None
+    if os.path.exists(filename):
+        f = open(filename)
+        for line in f:
+            if 'Final Values' in line:
+                result = tuple(map(float, line.split()[:6]))
+                break
+        f.close()
+    return result
+
+
 def ctffindOutputVersion(filename):
     """ Detect the ctffind version (3 or 4) that produced
     the given filename.
@@ -186,9 +201,21 @@ def setWrongDefocus(ctfModel):
     ctfModel.setDefocusU(-999)
     ctfModel.setDefocusV(-1)
     ctfModel.setDefocusAngle(-999)
-    
-    
-def readCtfModel(ctfModel, filename, ctf4=False):        
+
+
+def readCtfModel(ctfModel, filename, ctf4=False, ctfTilt=False):
+    if ctfTilt:
+        result = parseCtftiltOutput(filename)
+        if result is None:
+            setWrongDefocus(ctfModel)
+            tiltAxis, tiltAngle, ctfFit = -999, -999, -999
+        else:
+            defocusU, defocusV, defocusAngle, tiltAxis, tiltAngle, ctfFit = result
+            ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
+        ctfModel.setFitQuality(ctfFit)
+        ctfModel._ctftilt_tiltAxis = Float(tiltAxis)
+        ctfModel._ctftilt_tiltAngle = Float(tiltAngle)
+
     if not ctf4:
         result = parseCtffindOutput(filename)
         if result is None:
@@ -197,7 +224,7 @@ def readCtfModel(ctfModel, filename, ctf4=False):
             defocusU, defocusV, defocusAngle = result
             ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
     else:
-        result =  parseCtffind4Output(filename)
+        result = parseCtffind4Output(filename)
         if result is None:
             setWrongDefocus(ctfModel)
             ctfFit, ctfResolution, ctfPhaseShift = -999, -999, -999
@@ -206,7 +233,11 @@ def readCtfModel(ctfModel, filename, ctf4=False):
             ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
         ctfModel.setFitQuality(ctfFit)
         ctfModel.setResolution(ctfResolution)
-        ctfModel.setPhaseShift(rad2deg(ctfPhaseShift))
+
+        # Avoid creation of phaseShift
+        ctfPhaseShiftDeg = rad2deg(ctfPhaseShift)
+        if ctfPhaseShiftDeg != 0:
+            ctfModel.setPhaseShift(ctfPhaseShiftDeg)
 
 
 def geometryFromMatrix(matrix, inverseTransform=True):
@@ -228,12 +259,12 @@ def geometryFromAligment(alignment):
 
 
 def _createErrorCtf4Fn(self, filename):
-            f = open(filename, 'w+')
-            lines = """# Error report file 
+    f = open(filename, 'w+')
+    lines = """# Error report file 
   -999       -999       -999       -999       -999      -999       -999     
 """
-            f.write(lines)
-            f.close()
+    f.write(lines)
+    f.close()
 
 
 def _createErrorCtf3Fn(self, filename):
@@ -261,25 +292,25 @@ def readShiftsMovieAlignment(shiftFn):
 
 
 def writeShiftsMovieAlignment(movie, shiftsFn, s0, sN):
-    movieAlignment=movie.getAlignment()
+    movieAlignment = movie.getAlignment()
     shiftListX, shiftListY = movieAlignment.getShifts()
-    
+
     # Generating metadata for global shifts
     a0, aN = movieAlignment.getRange()
     alFrame = a0
-    
+
     if s0 < a0:
         diff = a0 - s0
         initShifts = "0.0000 " * diff
     else:
         initShifts = ""
-    
+
     if sN > aN:
         diff = sN - aN
         finalShifts = "0.0000 " * diff
     else:
         finalShifts = ""
-    
+
     shiftsX = ""
     shiftsY = ""
     for shiftX, shiftY in izip(shiftListX, shiftListY):
@@ -287,9 +318,9 @@ def writeShiftsMovieAlignment(movie, shiftsFn, s0, sN):
             shiftsX = shiftsX + "%0.4f " % shiftX
             shiftsY = shiftsY + "%0.4f " % shiftY
         alFrame += 1
-    
-    f=open(shiftsFn,'w')
-    shifts = (initShifts + shiftsX + " " + finalShifts + "\n" 
+
+    f = open(shiftsFn, 'w')
+    shifts = (initShifts + shiftsX + " " + finalShifts + "\n"
               + initShifts + shiftsY + " " + finalShifts)
     f.write(shifts)
     f.close()
