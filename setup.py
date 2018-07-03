@@ -19,7 +19,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='scipion_grigoriefflab',
-    version='1.0.0b4',
+    version='1.0.0b5',
     description='A python wrapper to use Ctffind, Unblur & others in Scipion',
     long_description=long_description,
     url='https://github.com/yaizar/scipion_grigoriefflab',
