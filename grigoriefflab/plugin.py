@@ -22,7 +22,7 @@ class GrigoriefflabPlugin(Plugin):
                       CTFFIND_HOME: os.path.join(os.environ['EM_ROOT'], 'ctffind-3.6'),
                       }
         Plugin.__init__(self, 'scipion_grigoriefflab',
-                              version="1.0.0b5",
+                              version="1.0.0b6",
                               logo="brandeis_logo.png",
                               configVars=configVars,
                               bibtex=_bibtex)
