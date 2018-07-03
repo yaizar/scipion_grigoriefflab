@@ -21,8 +21,8 @@ class GrigoriefflabPlugin(Plugin):
                       CTFFIND4_HOME: os.path.join(os.environ['EM_ROOT'], 'ctffind4-4.1.8'),
                       CTFFIND_HOME: os.path.join(os.environ['EM_ROOT'], 'ctffind-3.6'),
                       }
-        Plugin.__init__(self, 'grigoriefflab',
-                              version="1.0.0",
+        Plugin.__init__(self, 'scipion_grigoriefflab',
+                              version="1.0.0b4",
                               logo="brandeis_logo.png",
                               configVars=configVars,
                               bibtex=_bibtex)
